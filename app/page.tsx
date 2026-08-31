@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import vocabulary from '@/data/vocabulary.json';
+import { usePronunciation } from './use-pronunciation';
 
 type StudyStatus = 'mastered' | 'unfamiliar';
 type Word = (typeof vocabulary)[number];
@@ -39,13 +40,12 @@ export default function Home() {
   const [notificationMessage, setNotificationMessage] = useState('开启每日提醒');
   const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
   const playIndex = useRef(0);
+  const { accent, setAccent, rate, setRate, selectedVoice, speak, cancel, supported } = usePronunciation();
   const completed = Object.keys(statuses).length;
 
   const dateLabel = new Intl.DateTimeFormat('zh-CN', {
     timeZone: 'Asia/Shanghai', month: 'long', day: 'numeric', weekday: 'short',
   }).format(new Date());
-
-  useEffect(() => () => window.speechSynthesis?.cancel(), []);
 
   useEffect(() => {
     let active = true;
@@ -63,21 +63,9 @@ export default function Home() {
     return () => { active = false; };
   }, []);
 
-  function speak(word: string, onEnd?: () => void) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(word);
-    const voices = window.speechSynthesis.getVoices();
-    utterance.voice = voices.find((voice) => voice.lang === 'en-US') ?? voices.find((voice) => voice.lang.startsWith('en')) ?? null;
-    utterance.lang = 'en-US';
-    utterance.rate = 0.82;
-    utterance.onend = () => onEnd?.();
-    window.speechSynthesis.speak(utterance);
-  }
-
   function playAll() {
     if (isPlaying) {
-      window.speechSynthesis.cancel();
+      cancel();
       setIsPlaying(false);
       return;
     }
@@ -170,6 +158,18 @@ export default function Home() {
         </button>
         <span className="quiet-note">{syncMessage} · 北京时间 08:00</span>
       </section>
+      <section className="pronunciation-panel" aria-label="发音设置">
+        <div><strong>发音设置</strong><span>{supported ? `当前声音：${selectedVoice?.name ?? '浏览器英文语音'}` : '当前浏览器不支持语音播放'}</span></div>
+        <div className="accent-switch" aria-label="选择英语口音">
+          <button className={accent === 'en-US' ? 'active' : ''} onClick={() => setAccent('en-US')} type="button">美音</button>
+          <button className={accent === 'en-GB' ? 'active' : ''} onClick={() => setAccent('en-GB')} type="button">英音</button>
+        </div>
+        <label className="rate-select">语速
+          <select value={rate} onChange={(event) => setRate(Number(event.target.value))}>
+            <option value={0.82}>慢速</option><option value={0.92}>标准</option><option value={1}>自然</option>
+          </select>
+        </label>
+      </section>
       <section className="word-list" aria-label="今日单词列表">
         <div className="list-heading"><div><span>今日词汇</span><small>{words.filter((word) => word.isReview).length} 个复习词 · {words.filter((word) => !word.isReview).length} 个新词</small></div><span className="list-count">30 WORDS</span></div>
         {words.map((item, index) => (
@@ -179,7 +179,7 @@ export default function Home() {
               <div className="word-title"><h2>{item.word}</h2><span>{item.phonetic ? `/${item.phonetic.replace(/^\/+|\/+$/g, '')}/` : '暂无音标'}</span></div>
               <p>{item.translation}</p>
             </div>
-            <button className="sound-button" onClick={() => speak(item.word)} aria-label={`播放 ${item.word} 的发音`} type="button">🔊</button>
+            <button className="sound-button" onClick={() => speak(item.word)} aria-label={`播放 ${item.word} 的发音`} type="button">听音</button>
             <div className="word-actions">
               <button className={statuses[item.id] === 'unfamiliar' ? 'active unfamiliar' : ''} onClick={() => markWord(item.id, 'unfamiliar')} type="button">不熟</button>
               <button className={statuses[item.id] === 'mastered' ? 'active mastered' : ''} onClick={() => markWord(item.id, 'mastered')} type="button">掌握</button>

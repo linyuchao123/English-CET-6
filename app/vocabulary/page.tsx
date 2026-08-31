@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePronunciation } from '../use-pronunciation';
 
 type Filter = 'all' | 'mastered' | 'unfamiliar' | 'unlearned';
 type WordItem = { id: number; word: string; phonetic: string; translation: string; status: Exclude<Filter, 'all'> };
@@ -25,6 +26,7 @@ export default function VocabularyPage() {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<VocabularyData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { speak } = usePronunciation();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -69,6 +71,7 @@ export default function VocabularyPage() {
             <article className="catalog-row" key={item.id}>
               <div className="catalog-word"><strong>{item.word}</strong><span>{item.phonetic ? `/${item.phonetic.replace(/^\/+|\/+$/g, '')}/` : '暂无音标'}</span></div>
               <p>{item.translation}</p>
+              <button className="catalog-sound" onClick={() => speak(item.word)} type="button" aria-label={`播放 ${item.word} 的发音`}>听音</button>
               <span className={`status-pill ${item.status}`}>{item.status === 'mastered' ? '已掌握' : item.status === 'unfamiliar' ? '薄弱词' : '未学习'}</span>
             </article>
           ))}
