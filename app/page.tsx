@@ -5,6 +5,7 @@ import vocabulary from '@/data/vocabulary.json';
 
 type StudyStatus = 'mastered' | 'unfamiliar';
 type Word = (typeof vocabulary)[number];
+type DailyWord = Word & { isReview?: boolean; status?: StudyStatus | null };
 
 const DAY_SIZE = 30;
 const START_DATE = Date.UTC(2026, 7, 31);
@@ -24,9 +25,11 @@ function getDailyWords(dateKey: string): Word[] {
 
 export default function Home() {
   const dateKey = getBeijingDate();
-  const words = useMemo(() => getDailyWords(dateKey), [dateKey]);
+  const fallbackWords = useMemo(() => getDailyWords(dateKey), [dateKey]);
+  const [words, setWords] = useState<DailyWord[]>(fallbackWords);
   const [statuses, setStatuses] = useState<Record<number, StudyStatus>>({});
   const [isPlaying, setIsPlaying] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('进度跨设备同步');
   const playIndex = useRef(0);
   const completed = Object.keys(statuses).length;
 
@@ -35,6 +38,22 @@ export default function Home() {
   }).format(new Date());
 
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/today')
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to load progress');
+        return response.json() as Promise<{ words: DailyWord[] }>;
+      })
+      .then((data) => {
+        if (!active) return;
+        setWords(data.words);
+        setStatuses(Object.fromEntries(data.words.filter((word) => word.status).map((word) => [word.id, word.status!])))
+      })
+      .catch(() => active && setSyncMessage('当前使用本机词单，联网后自动同步'));
+    return () => { active = false; };
+  }, []);
 
   function speak(word: string, onEnd?: () => void) {
     if (!('speechSynthesis' in window)) return;
@@ -67,8 +86,17 @@ export default function Home() {
     playNext();
   }
 
-  function markWord(id: number, status: StudyStatus) {
+  async function markWord(id: number, status: StudyStatus) {
     setStatuses((current) => ({ ...current, [id]: status }));
+    try {
+      const response = await fetch('/api/progress', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wordId: id, status }),
+      });
+      if (!response.ok) throw new Error('Failed to save progress');
+      setSyncMessage('已同步');
+    } catch {
+      setSyncMessage('保存失败，请稍后再试');
+    }
   }
 
   return (
@@ -92,10 +120,10 @@ export default function Home() {
       <section className="toolbar" aria-label="学习工具">
         <button className="primary-button" onClick={playAll} type="button">{isPlaying ? '■ 停止连播' : '▶ 自动连播'}</button>
         <button className="secondary-button" type="button">开启每日提醒</button>
-        <span className="quiet-note">北京时间 08:00</span>
+        <span className="quiet-note">{syncMessage} · 北京时间 08:00</span>
       </section>
       <section className="word-list" aria-label="今日单词列表">
-        <div className="list-heading"><div><span>今日词汇</span><small>30 个六级词汇</small></div><span className="list-count">30 WORDS</span></div>
+        <div className="list-heading"><div><span>今日词汇</span><small>{words.filter((word) => word.isReview).length} 个复习词 · {words.filter((word) => !word.isReview).length} 个新词</small></div><span className="list-count">30 WORDS</span></div>
         {words.map((item, index) => (
           <article className="word-row" key={item.id}>
             <span className="word-index">{String(index + 1).padStart(2, '0')}</span>
