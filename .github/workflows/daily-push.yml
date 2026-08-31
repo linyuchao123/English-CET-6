@@ -1,0 +1,23 @@
+name: 每日六级词汇提醒
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  send-daily-reminder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 发送北京时间早八点提醒
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          DAILY_PUSH_TOKEN: ${{ secrets.DAILY_PUSH_TOKEN }}
+          SITES_BYPASS_TOKEN: ${{ secrets.SITES_BYPASS_TOKEN }}
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: Bearer ${DAILY_PUSH_TOKEN}" \
+            --header "OAI-Sites-Authorization: Bearer ${SITES_BYPASS_TOKEN}" \
+            "${SITE_URL}/api/push/daily"
