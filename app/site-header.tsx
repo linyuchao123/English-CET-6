@@ -1,8 +1,3 @@
-'use client';
-
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-
 const navigation = [
   { href: '/', label: '今日学习' },
   { href: '/vocabulary', label: '词汇总览' },
@@ -10,15 +5,12 @@ const navigation = [
 ];
 
 export default function SiteHeader() {
-  const pathname = usePathname();
   return (
     <header className="site-header">
       <div className="header-inner">
-        <Link className="brand" href="/" aria-label="六级词伴首页"><span className="brand-mark">C6</span><span>六级词伴</span></Link>
+        <a className="brand" href="/" aria-label="六级词伴首页"><span className="brand-mark">C6</span><span>六级词伴</span></a>
         <nav className="main-nav" aria-label="主要导航">
-          {navigation.map((item) => (
-            <Link className={pathname === item.href ? 'active' : ''} href={item.href} key={item.href}>{item.label}</Link>
-          ))}
+          {navigation.map((item) => <a href={item.href} key={item.href}>{item.label}</a>)}
         </nav>
       </div>
     </header>

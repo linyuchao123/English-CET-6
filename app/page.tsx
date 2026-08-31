@@ -57,7 +57,7 @@ export default function Home() {
       .then((data) => {
         if (!active) return;
         setWords(data.words);
-        setStatuses(Object.fromEntries(data.words.filter((word) => word.status).map((word) => [word.id, word.status!])))
+        setStatuses(Object.fromEntries(data.words.filter((word) => word.status).map((word) => [word.id, word.status!])));
       })
       .catch(() => active && setSyncMessage('当前使用本机词单，联网后自动同步'));
     return () => { active = false; };
