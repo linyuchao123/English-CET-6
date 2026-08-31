@@ -81,6 +81,38 @@ button { cursor:pointer; }
 .pagination button { border:1px solid #c5c6bf; border-radius:9px; background:transparent; padding:8px 14px; font-size:12px; }
 .pagination button:disabled { cursor:not-allowed; opacity:.35; }
 .pagination span { color:var(--muted); font-size:12px; }
+.metric-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+.metric-grid article { min-height:156px; display:flex; flex-direction:column; justify-content:space-between; border:1px solid var(--line); border-radius:16px; background:var(--card); padding:22px; }
+.metric-grid span,.metric-grid small { color:var(--muted); font-size:12px; }
+.metric-grid strong { margin-top:18px; font-size:42px; line-height:1; letter-spacing:-.05em; }
+.metric-grid em,.report-title em { color:var(--muted); font-size:14px; font-style:normal; font-weight:500; }
+.report-grid { display:grid; grid-template-columns:1.45fr .85fr; gap:20px; }
+.report-card { min-height:360px; border:1px solid var(--line); border-radius:18px; background:var(--card); padding:24px; }
+.report-title { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
+.report-title>div { display:flex; flex-direction:column; gap:5px; }
+.report-title span { font-weight:700; }
+.report-title small { color:var(--muted); font-size:12px; }
+.report-title>strong { font-size:28px; letter-spacing:-.04em; }
+.bar-chart { height:250px; display:grid; grid-template-columns:repeat(7,1fr); align-items:end; gap:14px; padding-top:32px; }
+.bar-column { height:100%; display:grid; grid-template-rows:20px 1fr 22px; align-items:end; text-align:center; }
+.bar-column>span,.bar-column>small { color:var(--muted); font-size:10px; }
+.bar-track { width:100%; height:100%; display:flex; align-items:flex-end; overflow:hidden; border-radius:8px 8px 4px 4px; background:#efede7; }
+.bar-track i { width:100%; min-height:5px; border-radius:8px 8px 3px 3px; background:linear-gradient(180deg,#4f8065,var(--green)); transition:height .4s ease; }
+.distribution-body { min-height:270px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px; }
+.donut { width:160px; height:160px; display:grid; place-items:center; border-radius:50%; background:conic-gradient(var(--green) 0 var(--mastered),#c8845f var(--mastered) var(--weak),#e5e2da var(--weak) 100%); }
+.donut>div { width:112px; height:112px; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:50%; background:var(--card); }
+.donut strong { font-size:28px; letter-spacing:-.04em; }
+.donut span { color:var(--muted); font-size:11px; }
+.legend { width:100%; display:grid; gap:9px; }
+.legend p { display:grid; grid-template-columns:10px 1fr auto; align-items:center; gap:9px; margin:0; font-size:12px; }
+.legend i { width:8px; height:8px; border-radius:50%; }
+.legend i.mastered { background:var(--green); }
+.legend i.unfamiliar { background:#c8845f; }
+.legend i.unlearned { background:#d8d5ce; }
+.legend span { color:var(--muted); }
+.study-tip { display:flex; align-items:center; gap:16px; margin-top:20px; border:1px solid #cbd7c8; border-radius:16px; background:var(--green-soft); padding:20px 22px; }
+.tip-mark { display:grid; place-items:center; width:34px; height:34px; flex:0 0 auto; border-radius:50%; background:var(--green); color:#fff; font-weight:800; }
+.study-tip p { margin:5px 0 0; color:#53645a; font-size:13px; }
 @media (max-width:720px) {
   .study-shell { width:min(100% - 24px,1040px); }
   .header-inner { width:min(100% - 24px,1120px); min-height:64px; }
@@ -105,5 +137,10 @@ button { cursor:pointer; }
   .catalog-row { grid-template-columns:1fr auto; gap:8px 12px; }
   .catalog-word { flex-wrap:wrap; }
   .catalog-row p { grid-column:1/3; }
+  .metric-grid { grid-template-columns:repeat(2,1fr); }
+  .metric-grid article { min-height:135px; padding:17px; }
+  .report-grid { grid-template-columns:1fr; }
+  .report-card { min-height:330px; padding:18px; }
+  .bar-chart { gap:7px; }
 }
 @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
