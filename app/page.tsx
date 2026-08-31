@@ -151,13 +151,9 @@ export default function Home() {
 
   return (
     <main className="study-shell">
-      <header className="topbar">
-        <a className="brand" href="#today" aria-label="六级词伴首页"><span className="brand-mark">C6</span><span>六级词伴</span></a>
-        <div className="date-chip">{dateLabel} · 今日 30 词</div>
-      </header>
       <section className="hero" id="today">
         <div>
-          <p className="eyebrow">TODAY · CET-6</p>
+          <p className="eyebrow">{dateLabel} · TODAY</p>
           <h1>今天，稳稳记住 30 个词。</h1>
           <p className="hero-copy">每天早上 8 点提醒，不赶进度。先听，再读，最后标记掌握程度。</p>
         </div>

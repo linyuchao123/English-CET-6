@@ -7,10 +7,14 @@ body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--fo
 button,a { font:inherit; }
 button { cursor:pointer; }
 .study-shell { width:min(1040px,calc(100% - 40px)); margin:0 auto; padding-bottom:72px; }
-.topbar { min-height:76px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); }
+.site-header { position:sticky; top:0; z-index:20; border-bottom:1px solid var(--line); background:color-mix(in srgb,var(--paper) 92%,transparent); backdrop-filter:blur(16px); }
+.header-inner { width:min(1120px,calc(100% - 40px)); min-height:72px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:28px; }
 .brand { display:inline-flex; align-items:center; gap:11px; color:inherit; text-decoration:none; font-size:16px; font-weight:700; letter-spacing:-.02em; }
 .brand-mark { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:var(--green); color:white; font-family:var(--font-geist-mono); font-size:12px; }
-.date-chip { color:var(--muted); font-size:13px; }
+.main-nav { display:flex; align-items:center; gap:6px; }
+.main-nav a { padding:9px 14px; border-radius:999px; color:var(--muted); text-decoration:none; font-size:13px; font-weight:620; transition:background .18s ease,color .18s ease; }
+.main-nav a:hover { background:#ebe7dd; color:var(--ink); }
+.main-nav a.active { background:var(--green); color:#fff; }
 .hero { display:grid; grid-template-columns:minmax(0,1fr) 280px; align-items:end; gap:64px; padding:78px 0 42px; }
 .eyebrow { margin:0 0 18px; color:var(--green); font-family:var(--font-geist-mono); font-size:12px; font-weight:700; letter-spacing:.12em; }
 .hero h1 { max-width:660px; margin:0; font-size:clamp(38px,6vw,68px); line-height:1.05; letter-spacing:-.055em; }
@@ -48,6 +52,10 @@ button { cursor:pointer; }
 .site-footer { padding:28px 0 0; color:var(--muted); text-align:center; font-size:11px; }
 @media (max-width:720px) {
   .study-shell { width:min(100% - 24px,1040px); }
+  .header-inner { width:min(100% - 24px,1120px); min-height:64px; }
+  .brand>span:last-child { display:none; }
+  .main-nav { gap:2px; }
+  .main-nav a { padding:8px 10px; font-size:12px; }
   .hero { grid-template-columns:1fr; gap:34px; padding-top:52px; }
   .progress-card { border-left:0; border-top:1px solid var(--line); padding:24px 0 0; }
   .toolbar { flex-wrap:wrap; }

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import SiteHeader from './site-header';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
@@ -21,5 +22,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: '#f5f1e8' };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="zh-CN"><body className={`${geistSans.variable} ${geistMono.variable}`}>{children}</body></html>;
+  return <html lang="zh-CN"><body className={`${geistSans.variable} ${geistMono.variable}`}><SiteHeader />{children}</body></html>;
 }
