@@ -50,6 +50,37 @@ button { cursor:pointer; }
 .word-actions button.active.unfamiliar { border-color:#b46945; background:#f6e4d9; color:#874124; }
 .word-actions button.active.mastered { border-color:var(--green); background:var(--green-soft); color:var(--green); }
 .site-footer { padding:28px 0 0; color:var(--muted); text-align:center; font-size:11px; }
+.content-shell { width:min(1120px,calc(100% - 40px)); margin:0 auto; padding:64px 0 80px; }
+.page-heading { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(260px,.6fr); align-items:end; gap:72px; margin-bottom:40px; }
+.page-heading h1 { max-width:680px; margin:0; font-size:clamp(36px,5vw,58px); line-height:1.08; letter-spacing:-.05em; }
+.page-heading>p { margin:0; color:var(--muted); font-size:14px; line-height:1.8; }
+.summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+.summary-card { min-height:124px; display:flex; flex-direction:column; align-items:flex-start; justify-content:space-between; border:1px solid var(--line); border-radius:16px; background:rgba(255,253,248,.6); padding:20px; text-align:left; }
+.summary-card span { color:var(--muted); font-size:13px; }
+.summary-card strong { font-size:34px; letter-spacing:-.04em; }
+.summary-card:hover,.summary-card.active { border-color:var(--green); background:var(--card); box-shadow:0 12px 30px rgba(35,83,60,.08); }
+.catalog-card { overflow:hidden; border:1px solid var(--line); border-radius:18px; background:var(--card); }
+.catalog-tools { min-height:76px; display:flex; align-items:center; justify-content:space-between; gap:18px; padding:14px 20px; border-bottom:1px solid var(--line); }
+.search-box { min-width:min(460px,70%); display:flex; align-items:center; gap:10px; border:1px solid #c8c7bf; border-radius:11px; background:#fff; padding:0 14px; }
+.search-box span { color:var(--muted); font-size:20px; }
+.search-box input { width:100%; height:44px; border:0; outline:0; background:transparent; color:var(--ink); }
+.catalog-total { color:var(--muted); font-size:12px; }
+.catalog-list { min-height:460px; transition:opacity .15s ease; }
+.catalog-list.loading { opacity:.45; }
+.catalog-row { min-height:88px; display:grid; grid-template-columns:260px minmax(0,1fr) 82px; align-items:center; gap:24px; padding:16px 22px; border-bottom:1px solid var(--line); }
+.catalog-word { display:flex; align-items:baseline; gap:10px; min-width:0; }
+.catalog-word strong { font-size:20px; letter-spacing:-.02em; }
+.catalog-word span,.catalog-row p { color:var(--muted); font-size:13px; }
+.catalog-row p { margin:0; line-height:1.55; }
+.status-pill { justify-self:end; border-radius:999px; padding:6px 10px; font-size:11px; white-space:nowrap; }
+.status-pill.mastered { background:var(--green-soft); color:var(--green); }
+.status-pill.unfamiliar { background:#f6e4d9; color:#874124; }
+.status-pill.unlearned { background:#eceae4; color:#777b76; }
+.empty-state { padding:100px 24px; color:var(--muted); text-align:center; font-size:13px; }
+.pagination { min-height:66px; display:flex; align-items:center; justify-content:center; gap:18px; padding:12px; }
+.pagination button { border:1px solid #c5c6bf; border-radius:9px; background:transparent; padding:8px 14px; font-size:12px; }
+.pagination button:disabled { cursor:not-allowed; opacity:.35; }
+.pagination span { color:var(--muted); font-size:12px; }
 @media (max-width:720px) {
   .study-shell { width:min(100% - 24px,1040px); }
   .header-inner { width:min(100% - 24px,1120px); min-height:64px; }
@@ -64,5 +95,15 @@ button { cursor:pointer; }
   .word-actions { grid-column:2/4; }
   .list-heading { padding:0 14px; }
   .list-heading small,.list-count { display:none; }
+  .content-shell { width:min(100% - 24px,1120px); padding-top:42px; }
+  .page-heading { grid-template-columns:1fr; gap:18px; }
+  .page-heading h1 { font-size:38px; }
+  .summary-grid { grid-template-columns:repeat(2,1fr); }
+  .summary-card { min-height:105px; }
+  .catalog-tools { align-items:stretch; flex-direction:column; }
+  .search-box { min-width:100%; }
+  .catalog-row { grid-template-columns:1fr auto; gap:8px 12px; }
+  .catalog-word { flex-wrap:wrap; }
+  .catalog-row p { grid-column:1/3; }
 }
 @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
