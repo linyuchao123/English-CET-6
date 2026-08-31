@@ -1,53 +1,117 @@
-const previewWords = [
-  { word: 'allocate', phonetic: '/ˈæləkeɪt/', translation: 'v. 分配；拨出' },
-  { word: 'compelling', phonetic: '/kəmˈpelɪŋ/', translation: 'adj. 引人注目的；令人信服的' },
-  { word: 'deteriorate', phonetic: '/dɪˈtɪəriəreɪt/', translation: 'v. 恶化；退化' },
-];
+'use client';
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+import vocabulary from '@/data/vocabulary.json';
+
+type StudyStatus = 'mastered' | 'unfamiliar';
+type Word = (typeof vocabulary)[number];
+
+const DAY_SIZE = 30;
+const START_DATE = Date.UTC(2026, 7, 31);
+
+function getBeijingDate() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date());
+}
+
+function getDailyWords(dateKey: string): Word[] {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const dayIndex = Math.max(0, Math.floor((Date.UTC(year, month - 1, day) - START_DATE) / 86_400_000));
+  const start = (dayIndex * DAY_SIZE) % vocabulary.length;
+  return Array.from({ length: DAY_SIZE }, (_, index) => vocabulary[(start + index) % vocabulary.length]);
+}
 
 export default function Home() {
+  const dateKey = getBeijingDate();
+  const words = useMemo(() => getDailyWords(dateKey), [dateKey]);
+  const [statuses, setStatuses] = useState<Record<number, StudyStatus>>({});
+  const [isPlaying, setIsPlaying] = useState(false);
+  const playIndex = useRef(0);
+  const completed = Object.keys(statuses).length;
+
+  const dateLabel = new Intl.DateTimeFormat('zh-CN', {
+    timeZone: 'Asia/Shanghai', month: 'long', day: 'numeric', weekday: 'short',
+  }).format(new Date());
+
+  useEffect(() => () => window.speechSynthesis?.cancel(), []);
+
+  function speak(word: string, onEnd?: () => void) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(word);
+    const voices = window.speechSynthesis.getVoices();
+    utterance.voice = voices.find((voice) => voice.lang === 'en-US') ?? voices.find((voice) => voice.lang.startsWith('en')) ?? null;
+    utterance.lang = 'en-US';
+    utterance.rate = 0.82;
+    utterance.onend = () => onEnd?.();
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function playAll() {
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+      return;
+    }
+    setIsPlaying(true);
+    playIndex.current = 0;
+    const playNext = () => {
+      if (playIndex.current >= words.length) {
+        setIsPlaying(false);
+        return;
+      }
+      const current = words[playIndex.current++];
+      speak(current.word, playNext);
+    };
+    playNext();
+  }
+
+  function markWord(id: number, status: StudyStatus) {
+    setStatuses((current) => ({ ...current, [id]: status }));
+  }
+
   return (
     <main className="study-shell">
       <header className="topbar">
-        <a className="brand" href="#today" aria-label="六级词伴首页">
-          <span className="brand-mark">C6</span><span>六级词伴</span>
-        </a>
-        <div className="date-chip">8月31日 · 今日 30 词</div>
+        <a className="brand" href="#today" aria-label="六级词伴首页"><span className="brand-mark">C6</span><span>六级词伴</span></a>
+        <div className="date-chip">{dateLabel} · 今日 30 词</div>
       </header>
       <section className="hero" id="today">
         <div>
-          <p className="eyebrow">DAY 01 · CET-6</p>
+          <p className="eyebrow">TODAY · CET-6</p>
           <h1>今天，稳稳记住 30 个词。</h1>
           <p className="hero-copy">每天早上 8 点提醒，不赶进度。先听，再读，最后标记掌握程度。</p>
         </div>
         <div className="progress-card" aria-label="今日学习进度">
-          <div className="progress-number">0<span>/30</span></div>
-          <div className="progress-track"><span /></div>
-          <p>完成今日学习后，进度会自动保存</p>
+          <div className="progress-number">{completed}<span>/30</span></div>
+          <div className="progress-track"><span style={{ width: `${completed / DAY_SIZE * 100}%` }} /></div>
+          <p>{completed === DAY_SIZE ? '今日任务完成，明天继续。' : '标记掌握程度后，进度会自动保存'}</p>
         </div>
       </section>
       <section className="toolbar" aria-label="学习工具">
-        <button className="primary-button" type="button">▶ 自动连播</button>
+        <button className="primary-button" onClick={playAll} type="button">{isPlaying ? '■ 停止连播' : '▶ 自动连播'}</button>
         <button className="secondary-button" type="button">开启每日提醒</button>
         <span className="quiet-note">北京时间 08:00</span>
       </section>
       <section className="word-list" aria-label="今日单词列表">
-        <div className="list-heading">
-          <div><span>今日词汇</span><small>24 个新词 · 6 个复习词</small></div>
-          <span className="list-count">30 WORDS</span>
-        </div>
-        {previewWords.map((item, index) => (
-          <article className="word-row" key={item.word}>
+        <div className="list-heading"><div><span>今日词汇</span><small>30 个六级词汇</small></div><span className="list-count">30 WORDS</span></div>
+        {words.map((item, index) => (
+          <article className="word-row" key={item.id}>
             <span className="word-index">{String(index + 1).padStart(2, '0')}</span>
             <div className="word-main">
-              <div className="word-title"><h2>{item.word}</h2><span>{item.phonetic}</span></div>
+              <div className="word-title"><h2>{item.word}</h2><span>{item.phonetic ? `/${item.phonetic.replace(/^\/+|\/+$/g, '')}/` : '暂无音标'}</span></div>
               <p>{item.translation}</p>
             </div>
-            <button className="sound-button" aria-label={`播放 ${item.word} 的发音`} type="button">🔊</button>
-            <div className="word-actions"><button type="button">不熟</button><button type="button">掌握</button></div>
+            <button className="sound-button" onClick={() => speak(item.word)} aria-label={`播放 ${item.word} 的发音`} type="button">🔊</button>
+            <div className="word-actions">
+              <button className={statuses[item.id] === 'unfamiliar' ? 'active unfamiliar' : ''} onClick={() => markWord(item.id, 'unfamiliar')} type="button">不熟</button>
+              <button className={statuses[item.id] === 'mastered' ? 'active mastered' : ''} onClick={() => markWord(item.id, 'mastered')} type="button">掌握</button>
+            </div>
           </article>
         ))}
-        <div className="preview-tail">其余 27 个单词将在完整版本中加载</div>
       </section>
+      <footer className="site-footer">词汇数据来自 english-vocabulary 开源项目 · 仅用于个人学习</footer>
     </main>
   );
 }

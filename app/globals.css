@@ -42,7 +42,9 @@ button { cursor:pointer; }
 .word-actions { display:flex; gap:8px; }
 .word-actions button { min-height:38px; border:1px solid #c5c6bf; border-radius:9px; background:transparent; padding:0 14px; font-size:13px; }
 .word-actions button:last-child { border-color:var(--green); color:var(--green); }
-.preview-tail { padding:20px; color:var(--muted); text-align:center; font-size:12px; }
+.word-actions button.active.unfamiliar { border-color:#b46945; background:#f6e4d9; color:#874124; }
+.word-actions button.active.mastered { border-color:var(--green); background:var(--green-soft); color:var(--green); }
+.site-footer { padding:28px 0 0; color:var(--muted); text-align:center; font-size:11px; }
 @media (max-width:720px) {
   .study-shell { width:min(100% - 24px,1040px); }
   .hero { grid-template-columns:1fr; gap:34px; padding-top:52px; }
