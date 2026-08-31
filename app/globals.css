@@ -25,6 +25,7 @@ button { cursor:pointer; }
 .primary-button,.secondary-button { min-height:42px; border-radius:10px; padding:0 18px; font-weight:650; }
 .primary-button { border:1px solid var(--green); background:var(--green); color:white; }
 .secondary-button { border:1px solid #bbbcb5; background:transparent; color:var(--ink); }
+.secondary-button:disabled { cursor:wait; opacity:.65; }
 .quiet-note { margin-left:auto; color:var(--muted); font-size:12px; }
 .word-list { overflow:hidden; border:1px solid var(--line); border-radius:18px; background:color-mix(in srgb,var(--card) 90%,transparent); }
 .list-heading { min-height:70px; display:flex; align-items:center; justify-content:space-between; padding:0 24px; border-bottom:1px solid var(--line); }

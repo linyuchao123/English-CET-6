@@ -23,6 +23,12 @@ function getDailyWords(dateKey: string): Word[] {
   return Array.from({ length: DAY_SIZE }, (_, index) => vocabulary[(start + index) % vocabulary.length]);
 }
 
+function urlBase64ToUint8Array(value: string) {
+  const padding = '='.repeat((4 - value.length % 4) % 4);
+  const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+  return Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+}
+
 export default function Home() {
   const dateKey = getBeijingDate();
   const fallbackWords = useMemo(() => getDailyWords(dateKey), [dateKey]);
@@ -30,6 +36,8 @@ export default function Home() {
   const [statuses, setStatuses] = useState<Record<number, StudyStatus>>({});
   const [isPlaying, setIsPlaying] = useState(false);
   const [syncMessage, setSyncMessage] = useState('进度跨设备同步');
+  const [notificationMessage, setNotificationMessage] = useState('开启每日提醒');
+  const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
   const playIndex = useRef(0);
   const completed = Object.keys(statuses).length;
 
@@ -99,6 +107,48 @@ export default function Home() {
     }
   }
 
+  async function enableNotifications() {
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+    if (isIos && !isStandalone) {
+      setNotificationMessage('iPhone 请先“添加到主屏幕”');
+      return;
+    }
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setNotificationMessage('当前浏览器不支持系统通知');
+      return;
+    }
+    setIsEnablingNotifications(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        setNotificationMessage('通知权限未开启');
+        return;
+      }
+      const registration = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+      await navigator.serviceWorker.ready;
+      const { publicKey } = await fetch('/api/push/key').then((response) => response.json()) as { publicKey: string };
+      const existing = await registration.pushManager.getSubscription();
+      const subscription = existing ?? await registration.pushManager.subscribe({
+        userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+      const saved = await fetch('/api/push/subscribe', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(subscription.toJSON()),
+      });
+      if (!saved.ok) throw new Error('Failed to save subscription');
+      const tested = await fetch('/api/push/test', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: subscription.endpoint }),
+      });
+      if (!tested.ok) throw new Error('Failed to send test notification');
+      setNotificationMessage('每日提醒已开启');
+    } catch {
+      setNotificationMessage('开启失败，请稍后重试');
+    } finally {
+      setIsEnablingNotifications(false);
+    }
+  }
+
   return (
     <main className="study-shell">
       <header className="topbar">
@@ -119,7 +169,9 @@ export default function Home() {
       </section>
       <section className="toolbar" aria-label="学习工具">
         <button className="primary-button" onClick={playAll} type="button">{isPlaying ? '■ 停止连播' : '▶ 自动连播'}</button>
-        <button className="secondary-button" type="button">开启每日提醒</button>
+        <button className="secondary-button" onClick={enableNotifications} disabled={isEnablingNotifications} type="button">
+          {isEnablingNotifications ? '正在开启…' : notificationMessage}
+        </button>
         <span className="quiet-note">{syncMessage} · 北京时间 08:00</span>
       </section>
       <section className="word-list" aria-label="今日单词列表">

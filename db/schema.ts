@@ -19,3 +19,18 @@ export const wordProgress = sqliteTable('word_progress', {
   reviewCount: integer('review_count').notNull().default(0),
   lastReviewedAt: text('last_reviewed_at').notNull(),
 });
+
+export const pushSubscriptions = sqliteTable('push_subscriptions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  endpoint: text('endpoint').notNull().unique(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const notificationLog = sqliteTable('notification_log', {
+  studyDate: text('study_date').primaryKey(),
+  sentCount: integer('sent_count').notNull().default(0),
+  sentAt: text('sent_at').notNull(),
+});

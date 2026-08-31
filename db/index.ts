@@ -35,6 +35,19 @@ export function ensureDb() {
         review_count INTEGER DEFAULT 0 NOT NULL,
         last_reviewed_at TEXT NOT NULL
       )`,
+      `CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        endpoint TEXT NOT NULL UNIQUE,
+        p256dh TEXT NOT NULL,
+        auth TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS notification_log (
+        study_date TEXT PRIMARY KEY NOT NULL,
+        sent_count INTEGER DEFAULT 0 NOT NULL,
+        sent_at TEXT NOT NULL
+      )`,
     ].map((statement) => env.DB.prepare(statement));
     schemaReady = env.DB.batch(statements).then(() => undefined);
   }
