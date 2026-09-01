@@ -35,6 +35,28 @@ export function ensureDb() {
         review_count INTEGER DEFAULT 0 NOT NULL,
         last_reviewed_at TEXT NOT NULL
       )`,
+      `CREATE TABLE IF NOT EXISTS study_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        study_date TEXT NOT NULL,
+        word_id INTEGER NOT NULL,
+        source TEXT NOT NULL,
+        status TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )`,
+      'CREATE INDEX IF NOT EXISTS idx_study_events_date_source ON study_events (study_date, source)',
+      'CREATE INDEX IF NOT EXISTS idx_study_events_word ON study_events (word_id)',
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_study_events_unique ON study_events (word_id, source, created_at)',
+      `CREATE TABLE IF NOT EXISTS quiz_attempts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        session_id TEXT NOT NULL,
+        word_id INTEGER NOT NULL,
+        selected_meaning TEXT NOT NULL,
+        correct_meaning TEXT NOT NULL,
+        is_correct INTEGER NOT NULL,
+        answered_at TEXT NOT NULL
+      )`,
+      'CREATE INDEX IF NOT EXISTS idx_quiz_attempts_session ON quiz_attempts (session_id)',
+      'CREATE INDEX IF NOT EXISTS idx_quiz_attempts_word_answered ON quiz_attempts (word_id, answered_at)',
       `CREATE TABLE IF NOT EXISTS push_subscriptions (
         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
         endpoint TEXT NOT NULL UNIQUE,
@@ -49,7 +71,11 @@ export function ensureDb() {
         sent_at TEXT NOT NULL
       )`,
     ].map((statement) => env.DB.prepare(statement));
-    schemaReady = env.DB.batch(statements).then(() => undefined);
+    schemaReady = env.DB.batch(statements).then(async () => {
+      await env.DB.prepare(`INSERT OR IGNORE INTO study_events (study_date, word_id, source, status, created_at)
+        SELECT substr(last_reviewed_at, 1, 10), word_id, 'manual', status, last_reviewed_at FROM word_progress`).run();
+      await env.DB.prepare('PRAGMA optimize').run();
+    });
   }
   return schemaReady;
 }

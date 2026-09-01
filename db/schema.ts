@@ -20,6 +20,32 @@ export const wordProgress = sqliteTable('word_progress', {
   lastReviewedAt: text('last_reviewed_at').notNull(),
 });
 
+export const studyEvents = sqliteTable('study_events', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  studyDate: text('study_date').notNull(),
+  wordId: integer('word_id').notNull(),
+  source: text('source', { enum: ['daily', 'quiz', 'manual'] }).notNull(),
+  status: text('status', { enum: ['mastered', 'unfamiliar'] }).notNull(),
+  createdAt: text('created_at').notNull(),
+}, (table) => [
+  index('idx_study_events_date_source').on(table.studyDate, table.source),
+  index('idx_study_events_word').on(table.wordId),
+  uniqueIndex('idx_study_events_unique').on(table.wordId, table.source, table.createdAt),
+]);
+
+export const quizAttempts = sqliteTable('quiz_attempts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  sessionId: text('session_id').notNull(),
+  wordId: integer('word_id').notNull(),
+  selectedMeaning: text('selected_meaning').notNull(),
+  correctMeaning: text('correct_meaning').notNull(),
+  isCorrect: integer('is_correct', { mode: 'boolean' }).notNull(),
+  answeredAt: text('answered_at').notNull(),
+}, (table) => [
+  index('idx_quiz_attempts_session').on(table.sessionId),
+  index('idx_quiz_attempts_word_answered').on(table.wordId, table.answeredAt),
+]);
+
 export const pushSubscriptions = sqliteTable('push_subscriptions', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   endpoint: text('endpoint').notNull().unique(),

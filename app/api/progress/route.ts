@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ensureDb, getDb } from '@/db';
-import { wordProgress } from '@/db/schema';
+import { ensureDb } from '@/db';
+import { env } from 'cloudflare:workers';
+import { beijingDateKey } from '@/db/daily';
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null) as { wordId?: unknown; status?: unknown } | null;
@@ -12,9 +13,13 @@ export async function POST(request: NextRequest) {
   const now = new Date().toISOString();
   try {
     await ensureDb();
-    const db = getDb();
-    await db.insert(wordProgress).values({ wordId, status, reviewCount: 1, lastReviewedAt: now })
-      .onConflictDoUpdate({ target: wordProgress.wordId, set: { status, lastReviewedAt: now, reviewCount: 1 } });
+    await env.DB.batch([
+      env.DB.prepare(`INSERT INTO word_progress (word_id, status, review_count, last_reviewed_at) VALUES (?, ?, 1, ?)
+        ON CONFLICT(word_id) DO UPDATE SET status = excluded.status, review_count = word_progress.review_count + 1, last_reviewed_at = excluded.last_reviewed_at`)
+        .bind(wordId, status, now),
+      env.DB.prepare('INSERT INTO study_events (study_date, word_id, source, status, created_at) VALUES (?, ?, ?, ?, ?)')
+        .bind(beijingDateKey(), wordId, 'daily', status, now),
+    ]);
     return NextResponse.json({ ok: true, wordId, status });
   } catch (error) {
     console.error('Failed to save progress', error);

@@ -4,6 +4,7 @@ import Link from 'next/link';
 const navigation = [
   { href: '/', label: '今日学习' },
   { href: '/vocabulary', label: '词汇总览' },
+  { href: '/quiz', label: '掌握检测' },
   { href: '/stats', label: '学习统计' },
 ];
 
