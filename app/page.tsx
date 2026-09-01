@@ -178,8 +178,9 @@ export default function Home() {
           <article className="word-row" key={item.id}>
             <span className="word-index">{String(index + 1).padStart(2, '0')}</span>
             <div className="word-main">
-              <div className="word-title"><h2>{item.word}</h2><span>{item.phonetic ? `/${item.phonetic.replace(/^\/+|\/+$/g, '')}/` : '暂无音标'}</span></div>
+              <div className="word-title"><h2>{item.word}</h2><span>{item.phonetic ? `/${item.phonetic.replace(/^\/+|\/+$/g, '')}/` : '暂无音标'}</span>{item.isHighFrequency && <em>高频 #{item.frequencyRank}</em>}</div>
               <p>{item.translation}</p>
+              {(item.phrases[0] || Object.keys(item.forms).length > 0) && <small className="word-extra">{item.phrases[0] && <span><b>{item.phrases[0].phrase}</b> · {item.phrases[0].meaning}</span>}{item.forms.plural && <span>复数 {item.forms.plural}</span>}{item.forms.past && <span>过去式 {item.forms.past} · 过去分词 {item.forms.pastParticiple}</span>}</small>}
             </div>
             <button className="sound-button" onClick={() => speak(item.word)} aria-label={`播放 ${item.word} 的发音`} type="button">听音</button>
             <div className="word-actions">

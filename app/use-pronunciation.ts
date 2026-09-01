@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
 export type Accent = 'en-US' | 'en-GB';
+
+const subscribeToBrowserSupport = () => () => {};
 
 const preferredVoices: Record<Accent, string[]> = {
   'en-US': ['Samantha', 'Ava', 'Google US English', 'Microsoft Aria', 'Alex'],
@@ -13,7 +15,7 @@ export function usePronunciation() {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [accent, setAccent] = useState<Accent>('en-US');
   const [rate, setRate] = useState(0.92);
-  const supported = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  const supported = useSyncExternalStore(subscribeToBrowserSupport, () => 'speechSynthesis' in window, () => false);
 
   useEffect(() => {
     if (!('speechSynthesis' in window)) return;
