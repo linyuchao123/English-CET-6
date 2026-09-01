@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import vocabulary from '@/data/vocabulary.json';
 import { usePronunciation } from './use-pronunciation';
+import { DAILY_TARGET } from '@/lib/study-config';
 
 type StudyStatus = 'mastered' | 'unfamiliar';
 type Word = (typeof vocabulary)[number];
 type DailyWord = Word & { isReview?: boolean; status?: StudyStatus | null };
 
-const DAY_SIZE = 30;
+const DAY_SIZE = DAILY_TARGET;
 const START_DATE = Date.UTC(2026, 7, 31);
 
 function getBeijingDate() {
@@ -20,8 +21,9 @@ function getBeijingDate() {
 function getDailyWords(dateKey: string): Word[] {
   const [year, month, day] = dateKey.split('-').map(Number);
   const dayIndex = Math.max(0, Math.floor((Date.UTC(year, month - 1, day) - START_DATE) / 86_400_000));
-  const start = (dayIndex * DAY_SIZE) % vocabulary.length;
-  return Array.from({ length: DAY_SIZE }, (_, index) => vocabulary[(start + index) % vocabulary.length]);
+  const ranked = [...vocabulary].sort((a, b) => a.frequencyRank - b.frequencyRank);
+  const start = (dayIndex * DAY_SIZE) % ranked.length;
+  return Array.from({ length: DAY_SIZE }, (_, index) => ranked[(start + index) % ranked.length]);
 }
 
 function urlBase64ToUint8Array(value: string) {
@@ -142,11 +144,11 @@ export default function Home() {
       <section className="hero" id="today">
         <div>
           <p className="eyebrow">{dateLabel} · TODAY</p>
-          <h1>今天，稳稳记住 30 个词。</h1>
+          <h1>今天，优先记住 50 个高频词。</h1>
           <p className="hero-copy">每天早上 8 点提醒，不赶进度。先听，再读，最后标记掌握程度。</p>
         </div>
         <div className="progress-card" aria-label="今日学习进度">
-          <div className="progress-number">{completed}<span>/30</span></div>
+          <div className="progress-number">{completed}<span>/50</span></div>
           <div className="progress-track"><span style={{ width: `${completed / DAY_SIZE * 100}%` }} /></div>
           <p>{completed === DAY_SIZE ? '今日任务完成，明天继续。' : '标记掌握程度后，进度会自动保存'}</p>
         </div>
@@ -171,7 +173,7 @@ export default function Home() {
         </label>
       </section>
       <section className="word-list" aria-label="今日单词列表">
-        <div className="list-heading"><div><span>今日词汇</span><small>{words.filter((word) => word.isReview).length} 个复习词 · {words.filter((word) => !word.isReview).length} 个新词</small></div><span className="list-count">30 WORDS</span></div>
+        <div className="list-heading"><div><span>今日词汇</span><small>{words.filter((word) => word.isReview).length} 个复习词 · {words.filter((word) => !word.isReview).length} 个新词</small></div><span className="list-count">50 WORDS</span></div>
         {words.map((item, index) => (
           <article className="word-row" key={item.id}>
             <span className="word-index">{String(index + 1).padStart(2, '0')}</span>

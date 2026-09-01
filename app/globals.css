@@ -9,6 +9,8 @@ button { cursor:pointer; }
 .study-shell { width:min(1040px,calc(100% - 40px)); margin:0 auto; padding-bottom:72px; }
 .site-header { position:sticky; top:0; z-index:20; border-bottom:1px solid var(--line); background:color-mix(in srgb,var(--paper) 92%,transparent); backdrop-filter:blur(16px); }
 .header-inner { width:min(1120px,calc(100% - 40px)); min-height:72px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:28px; }
+.exam-countdown { display:flex; align-items:baseline; gap:8px; margin-left:auto; color:var(--muted); font-size:11px; white-space:nowrap; }
+.exam-countdown strong { color:var(--green); font-size:13px; }
 .brand { display:inline-flex; align-items:center; gap:11px; color:inherit; text-decoration:none; font-size:16px; font-weight:700; letter-spacing:-.02em; }
 .brand-mark { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:var(--green); color:white; font-family:var(--font-geist-mono); font-size:12px; }
 .main-nav { display:flex; align-items:center; gap:6px; }
@@ -126,6 +128,7 @@ button { cursor:pointer; }
   .study-shell { width:min(100% - 24px,1040px); }
   .header-inner { width:min(100% - 24px,1120px); min-height:64px; }
   .brand>span:last-child { display:none; }
+  .exam-countdown { display:none; }
   .main-nav { gap:2px; }
   .main-nav a { padding:8px 10px; font-size:12px; }
   .hero { grid-template-columns:1fr; gap:34px; padding-top:52px; }

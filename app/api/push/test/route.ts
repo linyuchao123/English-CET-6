@@ -13,8 +13,7 @@ export async function POST(request: NextRequest) {
     .bind(body.endpoint).first<PushRow>();
   if (!row) return NextResponse.json({ error: '未找到通知订阅' }, { status: 404 });
   const response = await sendPush({ endpoint: row.endpoint, expirationTime: null, keys: { p256dh: row.p256dh, auth: row.auth } }, {
-    title: '六级词伴', body: '通知开启成功！每天早上 8 点提醒你学习 30 个词。', url: '/',
+    title: '六级词伴', body: '通知开启成功！每天早上 8 点提醒你学习 50 个高频词。', url: '/',
   });
   return NextResponse.json({ ok: response.ok }, { status: response.ok ? 200 : 502 });
 }
-

@@ -13,11 +13,10 @@ export function usePronunciation() {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [accent, setAccent] = useState<Accent>('en-US');
   const [rate, setRate] = useState(0.92);
-  const [supported, setSupported] = useState(false);
+  const supported = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
   useEffect(() => {
     if (!('speechSynthesis' in window)) return;
-    setSupported(true);
     const loadVoices = () => setVoices(window.speechSynthesis.getVoices().filter((voice) => voice.lang.startsWith('en')));
     loadVoices();
     window.speechSynthesis.addEventListener('voiceschanged', loadVoices);

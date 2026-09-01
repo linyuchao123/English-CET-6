@@ -3,6 +3,7 @@ import { env } from 'cloudflare:workers';
 import vocabulary from '@/data/vocabulary.json';
 import { ensureDb, getDb } from './index';
 import { dailyAssignments, wordProgress } from './schema';
+import { DAILY_TARGET, MAX_DAILY_REVIEWS } from '@/lib/study-config';
 
 export function beijingDateKey() {
   return new Intl.DateTimeFormat('en-CA', {
@@ -16,23 +17,35 @@ export async function getOrCreateDailyWords(studyDate = beijingDateKey()) {
   let rows = await db.select().from(dailyAssignments)
     .where(eq(dailyAssignments.studyDate, studyDate)).orderBy(asc(dailyAssignments.position));
 
-  if (rows.length < 30) {
+  if (rows.length < DAILY_TARGET) {
     const [assigned, progress] = await Promise.all([
       db.select({ wordId: dailyAssignments.wordId }).from(dailyAssignments),
       db.select().from(wordProgress),
     ]);
     const assignedIds = new Set(assigned.map((row) => row.wordId));
+    const wordMap = new Map(vocabulary.map((word) => [word.id, word]));
+    const assignedWords = new Set(assigned.map((row) => wordMap.get(row.wordId)?.word).filter(Boolean));
+    const todayIds = new Set(rows.map((row) => row.wordId));
+    const existingReviews = rows.filter((row) => row.isReview).length;
     const reviews = progress
-      .filter((row) => row.status === 'unfamiliar')
+      .filter((row) => row.status === 'unfamiliar' && !todayIds.has(row.wordId))
       .sort((a, b) => a.lastReviewedAt.localeCompare(b.lastReviewedAt))
-      .slice(0, 6)
+      .slice(0, Math.max(0, MAX_DAILY_REVIEWS - existingReviews))
       .map((row) => ({ wordId: row.wordId, isReview: true }));
 
-    const targetNewCount = 30 - reviews.length;
-    let newWords = vocabulary.filter((word) => !assignedIds.has(word.id)).slice(0, targetNewCount);
+    const targetNewCount = DAILY_TARGET - rows.length - reviews.length;
+    const seenWords = new Set([...assignedWords, ...reviews.map((item) => wordMap.get(item.wordId)?.word).filter(Boolean)]);
+    let newWords = [...vocabulary]
+      .sort((a, b) => a.frequencyRank - b.frequencyRank)
+      .filter((word) => {
+        if (assignedIds.has(word.id) || seenWords.has(word.word)) return false;
+        seenWords.add(word.word);
+        return true;
+      }).slice(0, targetNewCount);
     if (newWords.length < targetNewCount) {
       const chosen = new Set([...reviews.map((item) => item.wordId), ...newWords.map((word) => word.id)]);
-      const fallback = vocabulary.filter((word) => !chosen.has(word.id)).slice(0, targetNewCount - newWords.length);
+      const fallback = [...vocabulary].sort((a, b) => a.frequencyRank - b.frequencyRank)
+        .filter((word) => !chosen.has(word.id) && !todayIds.has(word.id)).slice(0, targetNewCount - newWords.length);
       newWords = [...newWords, ...fallback];
     }
 
@@ -40,8 +53,8 @@ export async function getOrCreateDailyWords(studyDate = beijingDateKey()) {
     const values = [
       ...newWords.map((word) => ({ wordId: word.id, isReview: false })),
       ...reviews,
-    ].slice(0, 30).map((item, position) => ({
-      studyDate, wordId: item.wordId, isReview: item.isReview, position, createdAt: now,
+    ].slice(0, DAILY_TARGET - rows.length).map((item, offset) => ({
+      studyDate, wordId: item.wordId, isReview: item.isReview, position: rows.length + offset, createdAt: now,
     }));
     if (values.length) {
       await env.DB.batch(values.map((value) => env.DB.prepare(
