@@ -92,7 +92,7 @@ button { cursor:pointer; }
 .pagination button { border:1px solid #c5c6bf; border-radius:9px; background:transparent; padding:8px 14px; font-size:12px; }
 .pagination button:disabled { cursor:not-allowed; opacity:.35; }
 .pagination span { color:var(--muted); font-size:12px; }
-.metric-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+.metric-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
 .metric-grid article { min-height:156px; display:flex; flex-direction:column; justify-content:space-between; border:1px solid var(--line); border-radius:16px; background:var(--card); padding:22px; }
 .metric-grid span,.metric-grid small { color:var(--muted); font-size:12px; }
 .metric-grid strong { margin-top:18px; font-size:42px; line-height:1; letter-spacing:-.05em; }

@@ -13,6 +13,10 @@ type Stats = {
   completedDays: number;
   streak: number;
   todayProgress: number;
+  weeklyLearned: number;
+  monthlyLearned: number;
+  quizAttempts: number;
+  quizAccuracy: number;
   activity: { date: string; label: string; reviewed: number }[];
 };
 
@@ -29,20 +33,22 @@ export default function StatsPage() {
       </section>
 
       <section className="metric-grid" aria-label="学习核心指标">
-        <article><span>已学习词汇</span><strong>{stats?.learned ?? '—'}</strong><small>占全部词库 {learnedRate}%</small></article>
+        <article><span>本周新学</span><strong>{stats?.weeklyLearned ?? '—'}</strong><small>本周首次完成学习的词</small></article>
+        <article><span>本月新学</span><strong>{stats?.monthlyLearned ?? '—'}</strong><small>重复复习不会重复计数</small></article>
         <article><span>已掌握</span><strong>{stats?.mastered ?? '—'}</strong><small>当前掌握率 {stats?.masteryRate ?? 0}%</small></article>
-        <article><span>连续学习</span><strong>{stats?.streak ?? '—'}<em> 天</em></strong><small>完成当天 30 词即计入</small></article>
+        <article><span>连续学习</span><strong>{stats?.streak ?? '—'}<em> 天</em></strong><small>完成当天全部词汇即计入</small></article>
         <article><span>完成天数</span><strong>{stats?.completedDays ?? '—'}<em> 天</em></strong><small>坚持比一次学很多更重要</small></article>
+        <article><span>检测正确率</span><strong>{stats?.quizAccuracy ?? '—'}<em>%</em></strong><small>累计完成 {stats?.quizAttempts ?? 0} 道检测题</small></article>
       </section>
 
       <section className="report-grid">
         <article className="report-card activity-card">
-          <div className="report-title"><div><span>近 7 天学习量</span><small>每天目标 30 词</small></div><strong>{stats?.todayProgress ?? 0}<em>/30</em></strong></div>
+          <div className="report-title"><div><span>近 7 天学习量</span><small>每天目标 50 词</small></div><strong>{stats?.todayProgress ?? 0}<em>/50</em></strong></div>
           <div className="bar-chart" aria-label="最近七天学习量柱状图">
             {stats?.activity.map((day) => (
               <div className="bar-column" key={day.date} title={`${day.date}：${day.reviewed} 词`}>
                 <span>{day.reviewed || ''}</span>
-                <div className="bar-track"><i style={{ height: `${Math.max(5, day.reviewed / 30 * 100)}%` }} /></div>
+                <div className="bar-track"><i style={{ height: `${Math.max(5, day.reviewed / 50 * 100)}%` }} /></div>
                 <small>{day.label}</small>
               </div>
             ))}
@@ -66,7 +72,7 @@ export default function StatsPage() {
 
       <section className="study-tip">
         <span className="tip-mark">!</span>
-        <div><strong>今天的建议</strong><p>{stats?.unfamiliar ? `你有 ${stats.unfamiliar} 个薄弱词，完成今日新词后可以到词汇总览集中复习。` : '先完成今天的 30 个词，标记不熟的词会自动进入后续复习。'}</p></div>
+        <div><strong>今天的建议</strong><p>{stats?.unfamiliar ? `你有 ${stats.unfamiliar} 个薄弱词，完成今日新词后可以到词汇总览集中复习。` : '先完成今天的 50 个词，再用掌握检测检查自己是否真的认识。'}</p></div>
       </section>
     </main>
   );
