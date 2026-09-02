@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import vocabulary from '@/data/vocabulary.json';
 import { usePronunciation } from './use-pronunciation';
 import { DAILY_TARGET } from '@/lib/study-config';
+import LearningHeatmap, { type HeatmapDay } from './learning-heatmap';
 
 type StudyStatus = 'mastered' | 'unfamiliar';
 type Word = (typeof vocabulary)[number];
@@ -41,9 +42,17 @@ export default function Home() {
   const [syncMessage, setSyncMessage] = useState('进度跨设备同步');
   const [notificationMessage, setNotificationMessage] = useState('开启每日提醒');
   const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
+  const [heatmapActivity, setHeatmapActivity] = useState<HeatmapDay[]>([]);
   const playIndex = useRef(0);
   const { accent, setAccent, rate, setRate, selectedVoice, speak, cancel, supported } = usePronunciation();
   const completed = Object.keys(statuses).length;
+
+  async function refreshHeatmap() {
+    const response = await fetch('/api/stats');
+    if (!response.ok) return;
+    const data = await response.json() as { heatmapActivity?: HeatmapDay[] };
+    setHeatmapActivity(data.heatmapActivity ?? []);
+  }
 
   const dateLabel = new Intl.DateTimeFormat('zh-CN', {
     timeZone: 'Asia/Shanghai', month: 'long', day: 'numeric', weekday: 'short',
@@ -63,6 +72,12 @@ export default function Home() {
       })
       .catch(() => active && setSyncMessage('当前使用本机词单，联网后自动同步'));
     return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then((response) => response.ok ? response.json() : null)
+      .then((data: { heatmapActivity?: HeatmapDay[] } | null) => setHeatmapActivity(data?.heatmapActivity ?? []));
   }, []);
 
   function playAll() {
@@ -92,6 +107,7 @@ export default function Home() {
       });
       if (!response.ok) throw new Error('Failed to save progress');
       setSyncMessage('已同步');
+      void refreshHeatmap();
     } catch {
       setSyncMessage('保存失败，请稍后再试');
     }
@@ -172,6 +188,7 @@ export default function Home() {
           </select>
         </label>
       </section>
+      <LearningHeatmap activity={heatmapActivity} />
       <section className="word-list" aria-label="今日单词列表">
         <div className="list-heading"><div><span>今日词汇</span><small>{words.filter((word) => word.isReview).length} 个复习词 · {words.filter((word) => !word.isReview).length} 个新词</small></div><span className="list-count">50 WORDS</span></div>
         {words.map((item, index) => (

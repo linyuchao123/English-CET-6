@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
+import LearningHeatmap, { type HeatmapDay } from '../learning-heatmap';
 
 type Stats = {
   totalWords: number;
@@ -18,6 +19,7 @@ type Stats = {
   quizAttempts: number;
   quizAccuracy: number;
   activity: { date: string; label: string; reviewed: number }[];
+  heatmapActivity: HeatmapDay[];
 };
 
 export default function StatsPage() {
@@ -40,6 +42,8 @@ export default function StatsPage() {
         <article><span>完成天数</span><strong>{stats?.completedDays ?? '—'}<em> 天</em></strong><small>坚持比一次学很多更重要</small></article>
         <article><span>检测正确率</span><strong>{stats?.quizAccuracy ?? '—'}<em>%</em></strong><small>累计完成 {stats?.quizAttempts ?? 0} 道检测题</small></article>
       </section>
+
+      <LearningHeatmap activity={stats?.heatmapActivity ?? []} />
 
       <section className="report-grid">
         <article className="report-card activity-card">

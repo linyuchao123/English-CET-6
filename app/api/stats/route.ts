@@ -6,6 +6,7 @@ import { beijingDateKey } from '@/db/daily';
 
 type ProgressCount = { status: 'mastered' | 'unfamiliar'; count: number };
 type DailyRow = { study_date: string; total: number; reviewed: number };
+type HeatmapRow = { study_date: string; count: number };
 type CountRow = { count: number };
 type QuizRow = { total: number; correct: number };
 
@@ -21,7 +22,8 @@ export async function GET() {
   const todayDate = new Date(`${today}T00:00:00Z`);
   const weekStart = shiftDate(today, -((todayDate.getUTCDay() + 6) % 7));
   const monthStart = `${today.slice(0, 7)}-01`;
-  const [progressResult, dailyResult, weekResult, monthResult, quizResult] = await Promise.all([
+  const heatmapStart = shiftDate(today, -364);
+  const [progressResult, dailyResult, weekResult, monthResult, quizResult, heatmapResult] = await Promise.all([
     env.DB.prepare('SELECT status, COUNT(*) AS count FROM word_progress GROUP BY status').all<ProgressCount>(),
     env.DB.prepare(`SELECT da.study_date, COUNT(DISTINCT da.word_id) AS total,
       COUNT(DISTINCT CASE WHEN se.word_id IS NOT NULL THEN da.word_id END) AS reviewed
@@ -34,6 +36,9 @@ export async function GET() {
       SELECT word_id, MIN(study_date) AS first_date FROM study_events GROUP BY word_id
     ) WHERE first_date >= ? AND first_date <= ?`).bind(monthStart, today).first<CountRow>(),
     env.DB.prepare('SELECT COUNT(*) AS total, COALESCE(SUM(is_correct), 0) AS correct FROM quiz_attempts').first<QuizRow>(),
+    env.DB.prepare(`SELECT study_date, COUNT(DISTINCT word_id) AS count FROM study_events
+      WHERE study_date >= ? AND study_date <= ? GROUP BY study_date ORDER BY study_date`)
+      .bind(heatmapStart, today).all<HeatmapRow>(),
   ]);
   const mastered = progressResult.results.find((row) => row.status === 'mastered')?.count ?? 0;
   const unfamiliar = progressResult.results.find((row) => row.status === 'unfamiliar')?.count ?? 0;
@@ -56,6 +61,11 @@ export async function GET() {
     };
   });
   const todayProgress = dailyMap.get(today)?.reviewed ?? 0;
+  const heatmapMap = new Map(heatmapResult.results.map((row) => [row.study_date, row.count]));
+  const heatmapActivity = Array.from({ length: 365 }, (_, index) => {
+    const date = shiftDate(heatmapStart, index);
+    return { date, count: heatmapMap.get(date) ?? 0 };
+  });
   return NextResponse.json({
     totalWords: vocabulary.length,
     learned,
@@ -71,5 +81,6 @@ export async function GET() {
     quizAttempts: quizResult?.total ?? 0,
     quizAccuracy: quizResult?.total ? Math.round(quizResult.correct / quizResult.total * 100) : 0,
     activity,
+    heatmapActivity,
   });
 }
