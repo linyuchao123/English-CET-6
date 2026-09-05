@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { usePronunciation } from '../use-pronunciation';
 import Link from 'next/link';
+import { QUIZ_BATCH_SIZE } from '@/lib/study-config';
 
 type Question = { wordId: number; word: string; phonetic: string; options: string[] };
 type Answer = { correct: boolean; correctMeaning: string; word: string };
@@ -19,13 +20,13 @@ export default function QuizPage() {
 
   function loadQuiz() {
     setLoading(true); setIndex(0); setAnswer(null); setResults([]);
-    fetch('/api/quiz?count=20').then((response) => response.json()).then((data) => {
+    fetch(`/api/quiz?count=${QUIZ_BATCH_SIZE}`).then((response) => response.json()).then((data) => {
       setSessionId(data.sessionId); setQuestions(data.questions); setAvailable(data.available);
     }).finally(() => setLoading(false));
   }
 
   useEffect(() => {
-    fetch('/api/quiz?count=20').then((response) => response.json()).then((data) => {
+    fetch(`/api/quiz?count=${QUIZ_BATCH_SIZE}`).then((response) => response.json()).then((data) => {
       setSessionId(data.sessionId); setQuestions(data.questions); setAvailable(data.available);
     }).finally(() => setLoading(false));
   }, []);
@@ -46,10 +47,10 @@ export default function QuizPage() {
   const correctCount = results.filter((item) => item.correct).length;
 
   return <main className="content-shell quiz-shell">
-    <section className="page-heading quiz-heading"><div><p className="eyebrow">MASTERY CHECK</p><h1>真正认识，才算掌握。</h1></div><p>从你标记为“已掌握”的词里抽取 20 题。选错的词会自动回到薄弱词，进入之后的每日复习。</p></section>
+    <section className="page-heading quiz-heading"><div><p className="eyebrow">MASTERY CHECK</p><h1>真正认识，才算掌握。</h1></div><p>每组从你标记为“已掌握”的词里抽取 40 题。选错的词会自动回到薄弱词；完成后还可以继续测试下一组。</p></section>
     {loading ? <section className="quiz-card empty-state">正在准备题目…</section> : questions.length === 0 ?
       <section className="quiz-card quiz-empty"><strong>还没有可检测的词</strong><p>先到今日学习标记一些“掌握”词汇，再回来检验自己是否真的认识。</p><Link href="/">去学习今日词汇</Link></section> : finished ?
-      <section className="quiz-card quiz-result"><p className="eyebrow">本组完成</p><strong>{correctCount}<span> / {questions.length}</span></strong><h2>正确率 {Math.round(correctCount / questions.length * 100)}%</h2><p>{results.some((item) => !item.correct) ? `有 ${results.length - correctCount} 个词已归入薄弱词，之后会再次遇到。` : '全部答对，这组词掌握得很扎实。'}</p><button className="primary-button" onClick={loadQuiz} type="button">再测一组</button></section> :
+      <section className="quiz-card quiz-result"><p className="eyebrow">本组完成</p><strong>{correctCount}<span> / {questions.length}</span></strong><h2>正确率 {Math.round(correctCount / questions.length * 100)}%</h2><p>{results.some((item) => !item.correct) ? `有 ${results.length - correctCount} 个词已归入薄弱词，之后会再次遇到。` : '全部答对，这组词掌握得很扎实。'}</p><button className="primary-button" onClick={loadQuiz} type="button">继续测试 40 题</button></section> :
       <section className="quiz-card">
         <div className="quiz-progress"><span>第 {index + 1} / {questions.length} 题</span><span>已掌握词库 {available} 词</span></div>
         <div className="quiz-word"><button onClick={() => speak(current.word)} type="button">听音</button><h2>{current.word}</h2><span>{current.phonetic ? `/${current.phonetic.replace(/^\/+|\/+$/g, '')}/` : ''}</span></div>

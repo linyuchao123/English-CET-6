@@ -2,6 +2,7 @@ import { env } from 'cloudflare:workers';
 import { NextRequest, NextResponse } from 'next/server';
 import vocabulary from '@/data/vocabulary.json';
 import { ensureDb } from '@/db';
+import { QUIZ_BATCH_SIZE } from '@/lib/study-config';
 
 type ProgressRow = { word_id: number };
 type RecentRow = { word_id: number };
@@ -22,7 +23,7 @@ function shuffle<T>(items: T[]) {
 
 export async function GET(request: NextRequest) {
   await ensureDb();
-  const requested = Math.min(50, Math.max(1, Number(request.nextUrl.searchParams.get('count')) || 20));
+  const requested = Math.min(60, Math.max(1, Number(request.nextUrl.searchParams.get('count')) || QUIZ_BATCH_SIZE));
   const [progressResult, recentResult] = await Promise.all([
     env.DB.prepare("SELECT word_id FROM word_progress WHERE status = 'mastered'").all<ProgressRow>(),
     env.DB.prepare('SELECT word_id FROM quiz_attempts ORDER BY answered_at DESC LIMIT 100').all<RecentRow>(),
