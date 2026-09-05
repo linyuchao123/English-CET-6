@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   let sentCount = 0;
   for (const row of results) {
     const response = await sendPush({ endpoint: row.endpoint, expirationTime: null, keys: { p256dh: row.p256dh, auth: row.auth } }, {
-      title: '六级词伴 · 今日 50 词', body: '今天的六级高频词和薄弱复习词已经准备好。', url: '/',
+      title: '六级词伴 · 今日 60 词', body: '今天的六级高频词和薄弱复习词已经准备好，完成后还可以继续学习。', url: '/',
     }).catch(() => null);
     if (response?.ok) sentCount += 1;
     if (response && [404, 410].includes(response.status)) {

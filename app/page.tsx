@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import vocabulary from '@/data/vocabulary.json';
 import { usePronunciation } from './use-pronunciation';
-import { DAILY_TARGET } from '@/lib/study-config';
+import { DAILY_TARGET, EXTRA_DAILY_BATCH } from '@/lib/study-config';
 import LearningHeatmap, { type HeatmapDay } from './learning-heatmap';
 
 type StudyStatus = 'mastered' | 'unfamiliar';
@@ -38,6 +38,8 @@ export default function Home() {
   const fallbackWords = useMemo(() => getDailyWords(dateKey), [dateKey]);
   const [words, setWords] = useState<DailyWord[]>(fallbackWords);
   const [statuses, setStatuses] = useState<Record<number, StudyStatus>>({});
+  const [completedIds, setCompletedIds] = useState<Record<number, true>>({});
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [syncMessage, setSyncMessage] = useState('进度跨设备同步');
   const [notificationMessage, setNotificationMessage] = useState('开启每日提醒');
@@ -45,7 +47,9 @@ export default function Home() {
   const [heatmapActivity, setHeatmapActivity] = useState<HeatmapDay[]>([]);
   const playIndex = useRef(0);
   const { accent, setAccent, rate, setRate, selectedVoice, speak, cancel, supported } = usePronunciation();
-  const completed = Object.keys(statuses).length;
+  const completed = Object.keys(completedIds).length;
+  const currentTarget = words.length || DAY_SIZE;
+  const canContinue = words.length >= DAY_SIZE && completed >= words.length;
 
   async function refreshHeatmap() {
     const response = await fetch('/api/stats');
@@ -63,12 +67,13 @@ export default function Home() {
     fetch('/api/today')
       .then((response) => {
         if (!response.ok) throw new Error('Failed to load progress');
-        return response.json() as Promise<{ words: DailyWord[] }>;
+        return response.json() as Promise<{ words: DailyWord[]; completedWordIds?: number[] }>;
       })
       .then((data) => {
         if (!active) return;
         setWords(data.words);
         setStatuses(Object.fromEntries(data.words.filter((word) => word.status).map((word) => [word.id, word.status!])));
+        setCompletedIds(Object.fromEntries((data.completedWordIds ?? []).map((id) => [id, true])));
       })
       .catch(() => active && setSyncMessage('当前使用本机词单，联网后自动同步'));
     return () => { active = false; };
@@ -106,10 +111,28 @@ export default function Home() {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wordId: id, status }),
       });
       if (!response.ok) throw new Error('Failed to save progress');
+      setCompletedIds((current) => ({ ...current, [id]: true }));
       setSyncMessage('已同步');
       void refreshHeatmap();
     } catch {
       setSyncMessage('保存失败，请稍后再试');
+    }
+  }
+
+  async function loadMoreWords() {
+    setIsLoadingMore(true);
+    try {
+      const response = await fetch('/api/today', { method: 'POST' });
+      const data = await response.json() as { words?: DailyWord[]; completedWordIds?: number[]; error?: string };
+      if (!response.ok || !data.words) throw new Error(data.error ?? '追加失败');
+      setWords(data.words);
+      setStatuses(Object.fromEntries(data.words.filter((word) => word.status).map((word) => [word.id, word.status!])));
+      setCompletedIds(Object.fromEntries((data.completedWordIds ?? []).map((id) => [id, true])));
+      setSyncMessage(`已追加 ${EXTRA_DAILY_BATCH} 个新词`);
+    } catch (error) {
+      setSyncMessage(error instanceof Error ? error.message : '追加失败，请稍后再试');
+    } finally {
+      setIsLoadingMore(false);
     }
   }
 
@@ -160,13 +183,13 @@ export default function Home() {
       <section className="hero" id="today">
         <div>
           <p className="eyebrow">{dateLabel} · TODAY</p>
-          <h1>今天，优先记住 50 个高频词。</h1>
+          <h1>今天，优先记住 60 个高频词。</h1>
           <p className="hero-copy">每天早上 8 点提醒，不赶进度。先听，再读，最后标记掌握程度。</p>
         </div>
         <div className="progress-card" aria-label="今日学习进度">
-          <div className="progress-number">{completed}<span>/50</span></div>
-          <div className="progress-track"><span style={{ width: `${completed / DAY_SIZE * 100}%` }} /></div>
-          <p>{completed === DAY_SIZE ? '今日任务完成，明天继续。' : '标记掌握程度后，进度会自动保存'}</p>
+          <div className="progress-number">{completed}<span>/{currentTarget}</span></div>
+          <div className="progress-track"><span style={{ width: `${Math.min(100, completed / currentTarget * 100)}%` }} /></div>
+          <p>{canContinue ? '当前词单完成，可以继续学习新词。' : '标记掌握程度后，进度会自动保存'}</p>
         </div>
       </section>
       <section className="toolbar" aria-label="学习工具">
@@ -174,6 +197,9 @@ export default function Home() {
         <button className="secondary-button" onClick={enableNotifications} disabled={isEnablingNotifications} type="button">
           {isEnablingNotifications ? '正在开启…' : notificationMessage}
         </button>
+        {canContinue && <button className="secondary-button" onClick={loadMoreWords} disabled={isLoadingMore} type="button">
+          {isLoadingMore ? '正在追加…' : `继续学习 ${EXTRA_DAILY_BATCH} 个新词`}
+        </button>}
         <span className="quiet-note">{syncMessage} · 北京时间 08:00</span>
       </section>
       <section className="pronunciation-panel" aria-label="发音设置">
@@ -190,7 +216,7 @@ export default function Home() {
       </section>
       <LearningHeatmap activity={heatmapActivity} />
       <section className="word-list" aria-label="今日单词列表">
-        <div className="list-heading"><div><span>今日词汇</span><small>{words.filter((word) => word.isReview).length} 个复习词 · {words.filter((word) => !word.isReview).length} 个新词</small></div><span className="list-count">50 WORDS</span></div>
+        <div className="list-heading"><div><span>今日词汇</span><small>{words.filter((word) => word.isReview).length} 个复习词 · {words.filter((word) => !word.isReview).length} 个新词</small></div><span className="list-count">{words.length} WORDS</span></div>
         {words.map((item, index) => (
           <article className="word-row" key={item.id}>
             <span className="word-index">{String(index + 1).padStart(2, '0')}</span>

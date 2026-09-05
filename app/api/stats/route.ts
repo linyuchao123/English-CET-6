@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import vocabulary from '@/data/vocabulary.json';
 import { ensureDb } from '@/db';
 import { beijingDateKey } from '@/db/daily';
+import { DAILY_TARGET } from '@/lib/study-config';
 
 type ProgressCount = { status: 'mastered' | 'unfamiliar'; count: number };
 type DailyRow = { study_date: string; total: number; reviewed: number };
@@ -27,7 +28,7 @@ export async function GET() {
     env.DB.prepare('SELECT status, COUNT(*) AS count FROM word_progress GROUP BY status').all<ProgressCount>(),
     env.DB.prepare(`SELECT da.study_date, COUNT(DISTINCT da.word_id) AS total,
       COUNT(DISTINCT CASE WHEN se.word_id IS NOT NULL THEN da.word_id END) AS reviewed
-      FROM daily_assignments da LEFT JOIN study_events se ON se.word_id = da.word_id AND se.study_date = da.study_date
+      FROM daily_assignments da LEFT JOIN study_events se ON se.word_id = da.word_id AND se.study_date = da.study_date AND se.source = 'daily'
       GROUP BY da.study_date ORDER BY da.study_date DESC`).all<DailyRow>(),
     env.DB.prepare(`SELECT COUNT(*) AS count FROM (
       SELECT word_id, MIN(study_date) AS first_date FROM study_events GROUP BY word_id
@@ -57,7 +58,7 @@ export async function GET() {
     return {
       date,
       label: new Intl.DateTimeFormat('zh-CN', { timeZone: 'UTC', weekday: 'short' }).format(new Date(`${date}T00:00:00Z`)),
-      reviewed: Math.min(50, row?.reviewed ?? 0),
+      reviewed: row?.reviewed ?? 0,
     };
   });
   const todayProgress = dailyMap.get(today)?.reviewed ?? 0;
@@ -75,7 +76,8 @@ export async function GET() {
     masteryRate: learned ? Math.round(mastered / learned * 100) : 0,
     completedDays: completedDates.size,
     streak,
-    todayProgress: Math.min(50, todayProgress),
+    todayProgress,
+    dailyTarget: DAILY_TARGET,
     weeklyLearned: weekResult?.count ?? 0,
     monthlyLearned: monthResult?.count ?? 0,
     quizAttempts: quizResult?.total ?? 0,

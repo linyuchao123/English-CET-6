@@ -9,10 +9,10 @@ type HeatmapCell = HeatmapDay | null;
 
 function activityLevel(count: number) {
   if (count <= 0) return 0;
-  if (count <= 10) return 1;
-  if (count <= 25) return 2;
-  if (count <= 40) return 3;
-  if (count < 50) return 4;
+  if (count <= 12) return 1;
+  if (count <= 30) return 2;
+  if (count <= 45) return 3;
+  if (count < 60) return 4;
   return 5;
 }
 

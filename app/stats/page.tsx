@@ -14,6 +14,7 @@ type Stats = {
   completedDays: number;
   streak: number;
   todayProgress: number;
+  dailyTarget: number;
   weeklyLearned: number;
   monthlyLearned: number;
   quizAttempts: number;
@@ -26,6 +27,7 @@ export default function StatsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   useEffect(() => { fetch('/api/stats').then((response) => response.json()).then(setStats); }, []);
   const learnedRate = stats ? Math.round(stats.learned / stats.totalWords * 100) : 0;
+  const dailyTarget = stats?.dailyTarget ?? 60;
 
   return (
     <main className="content-shell">
@@ -47,12 +49,12 @@ export default function StatsPage() {
 
       <section className="report-grid">
         <article className="report-card activity-card">
-          <div className="report-title"><div><span>近 7 天学习量</span><small>每天目标 50 词</small></div><strong>{stats?.todayProgress ?? 0}<em>/50</em></strong></div>
+          <div className="report-title"><div><span>近 7 天学习量</span><small>每天基础目标 {dailyTarget} 词</small></div><strong>{stats?.todayProgress ?? 0}<em>/{dailyTarget}</em></strong></div>
           <div className="bar-chart" aria-label="最近七天学习量柱状图">
             {stats?.activity.map((day) => (
               <div className="bar-column" key={day.date} title={`${day.date}：${day.reviewed} 词`}>
                 <span>{day.reviewed || ''}</span>
-                <div className="bar-track"><i style={{ height: `${Math.max(5, day.reviewed / 50 * 100)}%` }} /></div>
+                <div className="bar-track"><i style={{ height: `${Math.min(100, Math.max(5, day.reviewed / dailyTarget * 100))}%` }} /></div>
                 <small>{day.label}</small>
               </div>
             ))}
@@ -76,7 +78,7 @@ export default function StatsPage() {
 
       <section className="study-tip">
         <span className="tip-mark">!</span>
-        <div><strong>今天的建议</strong><p>{stats?.unfamiliar ? `你有 ${stats.unfamiliar} 个薄弱词，完成今日新词后可以到词汇总览集中复习。` : '先完成今天的 50 个词，再用掌握检测检查自己是否真的认识。'}</p></div>
+        <div><strong>今天的建议</strong><p>{stats?.unfamiliar ? `你有 ${stats.unfamiliar} 个薄弱词，完成今日新词后可以到词汇总览集中复习。` : '先完成今天的 60 个词，有余力可以继续学习，再用掌握检测检查自己是否真的认识。'}</p></div>
       </section>
     </main>
   );
